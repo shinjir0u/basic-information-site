@@ -1,47 +1,28 @@
-import fs from "fs/promises";
+import path from "path";
+import url from "url";
 
-const requestMethodMapper = {
-  "/": {
-    statusCode: 200,
-    page: "./views/index.html",
-  },
-  "/about": {
-    statusCode: 200,
-    page: "./views/about.html",
-  },
-  "/contact-me": {
-    statusCode: 200,
-    page: "./views/contact-me.html",
-  },
+const __filepath = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(path.dirname(__filepath));
+
+function homePageHandler(request, response) {
+  response.sendFile("/views/index.html", { root: __dirname });
+}
+
+function aboutPageHandler(request, response) {
+  response.sendFile("/views/about.html", { root: __dirname });
+}
+
+function contactMePageHandler(request, response) {
+  response.sendFile("/views/contact-me.html", { root: __dirname });
+}
+
+function errorHandler(request, response) {
+  response.status(404).sendFile("/views/404.html", { root: __dirname });
+}
+
+export default {
+  homePageHandler,
+  aboutPageHandler,
+  contactMePageHandler,
+  errorHandler,
 };
-
-async function readFileFromSystem(filePath) {
-  try {
-    return await fs.readFile(filePath, { encoding: "utf8" });
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-function getResponseForRequestURL(url) {
-  let statusCode = 404;
-  let page = "./views/404.html";
-
-  if (requestMethodMapper[url]) {
-    const mappedObject = requestMethodMapper[url];
-    ({ statusCode, page } = mappedObject);
-  }
-
-  return { statusCode, page };
-}
-
-async function serverHandler(request, response) {
-  const { statusCode, page } = getResponseForRequestURL(request.url);
-  const file = await readFileFromSystem(page);
-
-  response.setHeader("Content-Type", "text/html");
-  response.statusCode = statusCode;
-  response.end(file);
-}
-
-export default serverHandler;
